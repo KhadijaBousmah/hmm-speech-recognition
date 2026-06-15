@@ -80,9 +80,11 @@ def forward(observations, A, B, pi, variance = 1):
     # delta 1 (j) = pi(j) * bi(o1)
     # les autres sont a 0, car c'est un model left-right.
 
+    alphas = list()   
     delta = [0] * len(A)  
     delta[0] = pi[0] * gaussian(observations[0], B[0], variance)  # probability of the initial state
     
+    alphas.append(delta)
 
     # recursion
     for t in range(1, len(observations)):
@@ -103,13 +105,19 @@ def forward(observations, A, B, pi, variance = 1):
             new_delta[j] = best_previous_score * gaussian(observations[t], B[j], variance)
         
         delta = new_delta
+        alphas.append(delta)
   
-    return delta[-1]*0.5   # la probabilite de la fin 
+    return alphas 
 
 
 def backward(observations, A, B, variance=1):
     # initialization
-    beta = [1] * len(A)   # betaT(i) = 1 for all i
+    betas = list()
+
+    beta = [0] * len(A)   # betaT(i) = 1 for all i
+    beta[-1] = 0.5
+
+    betas.append(beta)
 
     # inverse recursion
     for t in range(len(observations) - 2, -1, -1):
@@ -119,20 +127,32 @@ def backward(observations, A, B, variance=1):
             best_previous = []
 
             for j in range(len(A)):
-                best_previous = A[i][j] * gaussian(observations[t + 1], B[j], variance) * beta[j]
-                best_previous.append(best_previous)
+                score = A[i][j] * gaussian(observations[t + 1], B[j], variance) * beta[j]
+                best_previous.append(score)
 
             new_beta[i] = sum(best_previous)
 
         beta = new_beta
+        betas.append(beta)
 
-    return beta
+    return betas[::-1]
 
 def gamma(observations, A, B, pi, variance=1):
     """ gamma t(i) = alpha t(i) * beta t(i) / P(O|lambda) """
-    alpha = forward(observations, A, B, pi, variance)
-    beta = backward(observations, A, B, variance)
-    
+    alphas = forward(observations, A, B, pi, variance)
+    betas = backward(observations, A, B, variance)
+
+    denominator = list()
+    for t in range(len(observations)):
+        prod = 0
+        for i in range(len(A)):
+            prod += alphas[t][i] * betas[t][i]
+        denominator.append(prod)
+
+    gammas = list()
+    for t in range(len(observations)):
+        pass
+
 
 
 def ksi():
