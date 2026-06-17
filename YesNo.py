@@ -188,11 +188,11 @@ def reestimate(observations, A, B, pi, variance = 1):
         row = list()
         for j in range(len(A)):
             numTranij = 0
-            for t in range(len(observation)):
+            for t in range(len(observations)):
                 numTranij += ksi[t][i][j]
             numTrani = 0
-            for t in range(len(observation)):
-                numTrani += alphas[t][i]
+            for t in range(len(observations)):
+                numTrani += gammas[t][i]
             row.append(numTranij / numTrani)
         newA.append(row)
 
