@@ -127,7 +127,7 @@ def backward(observations, A, B, variance=1):
             best_previous = []
 
             for j in range(len(A)):
-                score = A[i][j] * gaussian(observations[t + 1], B[j], variance) * beta[j]
+                score = A[i][j] * gaussian(observations[t + 1], B[j]) * beta[j]
                 best_previous.append(score)
 
             new_beta[i] = sum(best_previous)
@@ -168,7 +168,7 @@ def ksi(observations, A, B, pi, variance=1):
         for i in range(len(A)):
             lig = list()
             for j in range(len(A)):
-                bj = gaussian(observations[t+1], B[j], variance)
+                bj = gaussian(observations[t+1], B[j])
                 lig.append(alphas[t][i] * A[i][j] * bj * betas[t + 1][j]/prob)
             matrix.append(lig)
         ksi.append(matrix)
@@ -179,30 +179,53 @@ def ksi(observations, A, B, pi, variance=1):
 def reestimate(observations, A, B, pi, variance = 1):
     """ this function will help us to reestimate the parameters of the HMM """
     alphas = forward(observations, A, B, pi)
-    betas = backward(observation, A, B)
+    betas = backward(observations, A, B)
     gammas = gamma(observations, A, B, pi)
-    xi = ksi(observation,A, B, pi)
+    xi = ksi(observations,A, B, pi)
     
     newA = list()
     for i in range(len(A)):
         row = list()
         for j in range(len(A)):
             numTranij = 0
-            for t in range(len(observations)):
-                numTranij += ksi[t][i][j]
+            for t in range(len(observations) - 2):
+                numTranij += xi[t][i][j]
             numTrani = 0
-            for t in range(len(observations)):
+            for t in range(len(observations) - 2):
                 numTrani += gammas[t][i]
             row.append(numTranij / numTrani)
         newA.append(row)
 
+
     newB = list()
+    # for k in range(len(observations))
+    for j in range(len(A)):
+        expeStaj = 0
+        for t in range(len(observations)):
+            expeStaj += gammas[t][j]
+        
+        expecNum = 0
+        for t in range(len(observations)):
+                # a revoir B : observations[t] ou gaussian() 
+                expecNum += gammas[t][j] * observations[t]
+        newB.append(expecNum / expeStaj)
+
+    return newA, newB
+
+
+def learning(observations, A, B, pi, variance):
+    """ learning loop of the model """
+    oldA, oldB = A, B
+    for i in range(10):
+        newA, newB = reestimate(observations, oldA, oldB, pi)
+        oldA, oldB = newA, newB
+
     
 
-    denom = 0
-    for i in range(len(A)):
 
 
+
+    
     
         
 
