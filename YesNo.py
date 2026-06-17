@@ -219,13 +219,9 @@ def learning(observations, A, B, pi, variance):
     for i in range(10):
         newA, newB = reestimate(observations, oldA, oldB, pi)
         oldA, oldB = newA, newB
-
     
+    return oldA, oldB
 
-
-
-
-    
     
         
 
