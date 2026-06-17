@@ -142,21 +142,69 @@ def gamma(observations, A, B, pi, variance=1):
     alphas = forward(observations, A, B, pi, variance)
     betas = backward(observations, A, B, variance)
 
-    denominator = list()
+    prob = alphas[-1][-1] * 0.5  
+
+    gammas = list() 
+
     for t in range(len(observations)):
-        prod = 0
+        tmp = list()
         for i in range(len(A)):
-            prod += alphas[t][i] * betas[t][i]
-        denominator.append(prod)
+            tmp.append(alphas[t][i] * betas[t][i] / prob)
 
-    gammas = list()
-    for t in range(len(observations)):
-        pass
+        gammas.append(tmp)
+    
+    return gammas 
+
+def ksi(observations, A, B, pi, variance=1):
+    """ ksi t(i,j) = alpha t(i) * aij * bj(ot+1) * beta t+1(j) / P(O|lambda) """
+    alphas = forward(observations, A, B, pi, variance)
+    betas = backward(observations, A, B, variance)
+    
+    prob = alphas[-1][-1] * 0.5
+
+    ksi = list()
+    for t in range(len(observations) - 1):
+        matrix = list()
+        for i in range(len(A)):
+            lig = list()
+            for j in range(len(A)):
+                bj = gaussian(observations[t+1], B[j], variance)
+                lig.append(alphas[t][i] * A[i][j] * bj * betas[t + 1][j]/prob)
+            matrix.append(lig)
+        ksi.append(matrix)
+
+    return ksi
 
 
+def reestimate(observations, A, B, pi, variance = 1):
+    """ this function will help us to reestimate the parameters of the HMM """
+    alphas = forward(observations, A, B, pi)
+    betas = backward(observation, A, B)
+    gammas = gamma(observations, A, B, pi)
+    xi = ksi(observation,A, B, pi)
+    
+    newA = list()
+    for i in range(len(A)):
+        row = list()
+        for j in range(len(A)):
+            numTranij = 0
+            for t in range(len(observation)):
+                numTranij += ksi[t][i][j]
+            numTrani = 0
+            for t in range(len(observation)):
+                numTrani += alphas[t][i]
+            row.append(numTranij / numTrani)
+        newA.append(row)
 
-def ksi():
-    pass    
+    newB = list()
+    
+
+    denom = 0
+    for i in range(len(A)):
+
+
+    
+        
 
 
 
