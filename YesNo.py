@@ -188,25 +188,28 @@ def ksi(observations, A, B, pi, variance=1):
     return ksi
 
 
-def reestimate(observations, A, B, pi, variance = 1):
+def reestimate(observations : list[list], A : list[list], B : list, pi : list, variance : list) -> tuple:
     """ this function will help us to reestimate the parameters of the HMM """
-    gammas = gamma(observations, A, B, pi, variance)
-    xi = ksi(observations, A, B, pi, variance)
     
     newA = list()
     for i in range(len(A)):
         row = list()
         for j in range(len(A)):
-            if A[i][j] == 0:
-                row.append(0.0)
+            # we want to keep it a left-right model
+            if A[i][j] == 0 :
+                row.append(0)
                 continue
 
             numTranij = 0
-            for t in range(len(observations) - 1):
-                numTranij += xi[t][i][j]
             numTrani = 0
-            for t in range(len(observations) - 1):
-                numTrani += gammas[t][i]
+
+            for observation in observations :
+                gammas = gamma(observation, A, B, pi, variance)
+                xi = ksi(observation, A, B, pi, variance)
+                for t in range(len(observation) - 1):
+                    numTranij += xi[t][i][j]
+                for t in range(len(observation) - 1):
+                    numTrani += gammas[t][i]
             
             if numTrani == 0 :
                 row.append(1e-8)
@@ -217,26 +220,33 @@ def reestimate(observations, A, B, pi, variance = 1):
     newB = list()
     for j in range(len(A)):
         expeStaj = 0
-        for t in range(len(observations)):
-            expeStaj += gammas[t][j]
-        
         expecNum = 0
-        for t in range(len(observations)):
-            expecNum += gammas[t][j] * observations[t]
+
+        for observation in observations :
+            gammas = gamma(observation, A, B, pi, variance)
+            for t in range(len(observation)):
+                expeStaj += gammas[t][j]
+            for t in range(len(observation)):
+                expecNum += gammas[t][j] * observation[t]
+
         if expeStaj == 0 :
             newB.append(1e-8)
         else :    
             newB.append(expecNum / expeStaj)
 
+    
+
     newVar = list()
     for j in range(len(A)):
         expeStaj = 0
-        for t in range(len(observations)):
-            expeStaj += gammas[t][j]
-        
         nominator = 0
-        for t in range(len(observations)):
-            nominator += gammas[t][j] * (observations[t] - newB[j]) ** 2
+
+        for observation in observations :
+            gammas = gamma(observation, A, B, pi, variance)
+            for t in range(len(observation)):
+                expeStaj += gammas[t][j]
+            for t in range(len(observation)):
+                nominator += gammas[t][j] * (observation[t] - newB[j]) ** 2
         
         if expeStaj == 0 :
             newVar.append(1e-8)
